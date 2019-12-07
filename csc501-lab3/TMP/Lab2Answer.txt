@@ -1,0 +1,290 @@
+1. The priority inversion problem could cause that a higher-priority process needs to wait for the completion of a lower-priority process.
+1.1 Priority inheritance is one approach to address this issue. Please give another approach and briefly describe its idea.
+
+Answer:
+Priority ceiling protocol could perfectly handle this priority version problem. By this way, every resource would be lock with a priority ceiling which is the largest priority among the processes who ask for resource. Raising the priority of the processes every time when resource is asked for. And, generally two major priority ceiling protocol are widely used, which is:
+
+ICPP (Immediate Ceiling Priority Protocol): a process's priority is immediately raised when it locks a resource. The process's priority is set to the priority ceiling of the resource, thus no process that may lock the resource is able to get scheduled. A process can only lock a resource if its dynamic priority is higher than the priority ceilings of all resources locked by other process. 
+
+OCPP(Original Ceiling Priority Protocol): a process's priority is only raised when a higher-priority process tries to acquire the same resource. The process's priority is then raised to the priority ceiling of the resource, ensuring that previous process quickly finishes its critical section, unlocking the resource. A process is only allowed to lock a resource if its dynamic priority is higher than the priority ceilings of all resources locked by other process. Otherwise the process becomes blocked, waiting for the resource.
+
+1.2 Design a test case to show that your approach can address the priority inversion problem. You should compare the results that derived from the original XINU implementation (use semaphore) and that derived from your implementation (use readers/writer locks). Put your results in Lab3Answers.txt and your test case program (name it task1.c) in both ./sys and ./TMP
+
+Answer:
+As you can see in the priority inheritance implementation, writer(prio 20) gets lock first then reader A(prio 30) gets blocked. After that reader B(prio 25) is created but it has to wait in ready queue till reader A finished. So once writer releases the lock, reader A executes followed by reader B.
+
+As you can see in the semaphore implementation, writer(prio 20) printed twice and after that reader A with higher priority(prio 30) got blocked. But later reader B(prio 25) acquired lock and context switch could not happen in between as reader B had maximum priority in ready queue. After reader B died writer could continue. This is the priority inversion problem as reader B is starting even though reader A(prio 30) with higher priority is still waiting to get lock which itself starts waiting in ready queue till reader B completes. Reader B stole a lot of CPU cycles which should have been given to reader A (and hence writer should be run before reader A).
+
+===================================Results==================================================================================================
+Task: comapare the basic priority inheritence with semaphore implementation
+
+Priority inheritance implementation:
+-start lock writer. lock granted to write (prio 20)
+  lock writer: to acquire lock
+  lock writer: acquired lock, starts writing
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+-start lock reader A. reader A(prio 30) blocked on the lock
+  lock reader A: to acquire lock
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+    lock writer
+  lock writer: to release lock
+-start lock reader B. reader B(prio 25) should not get lock before reader A(prio 30) and should be blocked
+  lock reader B: to acquire lock
+  lock reader B: acquired lock
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+    lock reader B
+  lock reader B: to release lock
+
+Semaphore implementation: Priority inversion problem
+-start SEM writer. lock granted to write (prio 20)
+  Sem writer: to acquire semaphore
+  Sem writer: acquired semaphore, starts writing
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+-start SEM reader A. reader A(prio 30) blocked on the lock
+  Sem reader A: to acquire semaphore
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+-start SEM reader B. reader B(prio 25) should not get lock before reader A(prio 30) and should be blocked
+  Sem reader B: to acquire semaphore
+  Sem reader B: acquired semaphore
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+    Sem reader B
+  Sem reader B: to release semaphore
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+    Sem writer
+  Sem writer: to release semaphore
+  Sem reader A: acquired semaphore
+  Sem reader A: to release semaphore
+===================================================================================================================================================
+
+
+
+
+2. Synchronization is a quite complex issue in operating systems. To show your understanding about process synchronization, you are asked to point out a reader/writer synchronization issue in this pesudo-code: task2_sync_issue.c. Multiple reader threads can execute this code concurrently by calling do_update. All the variables starting with global_ are global variables. You are asked to describe the potential issue caused by the incorrect synchronization and point out at least one possible thread interleaving that would trigger the problem. Put your answer in Lab3Answers.txt mentioned above.
+
+Answer:In the psuedocode, since there are multiple readers in do_update(), they can aquire lock and simultaneously enter the try_update() function. Semaphore in try update is initialized to 10. This implies that 10 readers can invoke the buffer_add() function. Now lets us assume we have 2 readers R1 and R2 in buffer_add() function and they are trying to invoke memcpy. R1 invokes memcpy and after it is done copying size bytes from text to buf->buf at buf->len index OS gets a timer interrupt. So context is switched to R2 which copies size bytes from text to index buf->len again where R1 copied overwriting R1's information instead of appending. So we lose the copy of R1's text/time in buf->buf. Since this buf->buf is a global buffer shared by all threads, this will give unexpected results. Possible interleaving - 
+
+Instructions - 
+
+    memcpy (buf->buf + buf->len, txt, size);   //S1
+
+    buf->len += size;						   //S2
+
+
+
+Example - global_buf.len=4
+
+		  global_buf.buf="ABCD"
+
+
+
+Threads - R1 and R2
+
+
+
+Interleaving - 
+
+R1(S1)     ---> global_buf.buf="ABCDR1"   global_buf.len=4
+
+interrupt
+
+R2(S1)	   ---> global_buf.buf="ABCDR2"   global_buf.len=4
+
+R2(S2)	   ---> global_buf.buf="ABCDR2"   global_buf.len=6
+
+interrupt  
+
+R1(S2)	   ---> global_buf.buf="ABCDR2"   global_buf.len=8
+
+
+
+As we can see in the example, R2 overwrote R1's data and hence buffer will also have some garbage data of size 2. Final global_buf.buf="ABCDR2xx".
+
